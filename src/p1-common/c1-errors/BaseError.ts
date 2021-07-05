@@ -13,8 +13,9 @@ export class BaseError {
     ) {
     }
 
-    // отправка ответа
-    send(res: Response) {
+    /** отправка ошибки
+     */
+    sendError(res: Response) {
         const error = IS_DEVELOPER_VERSION
             ? 'try later'
             : this.type === 500
@@ -23,65 +24,69 @@ export class BaseError {
             )
                 : this.e
 
+        this.log()
+
         res.status(this.type).json({
             more: this.more,
             inTry: this.inTry,
-            errorObj: this.type === 500 && IS_DEVELOPER_VERSION ? deepCopySafely(this.e, 3) : undefined, // превращение ошибки в объект
+            errorObj: (this.type === 500 && IS_DEVELOPER_VERSION) ? deepCopySafely(this.e, 3) : undefined, // превращение ошибки в объект
             error,
             info: this.type === 500 // стандартное описание ошибки
-                ? "Back doesn't know what the error is... ^._.^"
+                ? 'Back doesn\'t know what the error is... ^._.^'
                 : 'Check your request! /ᐠ-ꞈ-ᐟ\\',
         })
     }
 
-    logInDb: any
-
-    log() {
-        this.logInDb && this.logInDb()
+    static logInDB: any
+    static setLogInDB = (f: (error: BaseError) => void) => {
+        BaseError.logInDB = f
     }
 
-    // промис с отловом ошибок
-    static withTry = <A>(
-        getAnswer: () => A,
+    log() {
+        BaseError.logInDB && BaseError.logInDB(this)
+    }
+
+    /** автоматическая отправка ошибки если ошибка
+     */
+    static checkAndSendError = <A>(answer: A | BaseError, res: Response): A | null => {
+        if (answer instanceof BaseError) {
+            answer.sendError(res)
+            return null
+        } else {
+            return answer
+        }
+    }
+
+    /** промис с отловом ошибок
+     */
+    static withTry = async <A>(
+        getAnswer: () => Promise<A>,
         inTry: string,
         more?: any
     ) => {
         try {
-            return getAnswer()
+            return await getAnswer()
         } catch (e) {
             if (e instanceof BaseError) {
                 return e
 
             } else {
-                const er = new BaseError(500, 'withTry/' + inTry, e, more)
-                er.log()
-                return er
+                return new BaseError(500, inTry + '/withTry', e, more)
             }
         }
     }
 
 
-    // промис с отловом ошибок и автоматической отправкой ошибки на фронт
-    static withTryAndSend = <A>(
+    /** промис с отловом ошибок и автоматической отправкой ошибки на фронт
+     */
+    static withTryAndSendError = async <A>(
         response: Response,
-        getAnswer: () => A,
+        getAnswer: () => Promise<A>,
         inTry: string,
         more?: any
-    ) => {
-        try {
-            const answer = BaseError.withTry(getAnswer, 'withTryAndSend/' + inTry, more)
+    ): Promise<A | null> => {
+        const answer = await BaseError.withTry(getAnswer,  inTry + '/withTryAndSendError', more)
 
-            if (answer instanceof BaseError) {
-                answer.send(response)
-                return null
-            } else {
-                return answer
-            }
-        } catch (e) { // maybe never
-            const er = new BaseError(500, 'withTryAndSend/' + inTry, e, more)
-            er.log()
-            er.send(response)
-            return null
-        }
+        return BaseError.checkAndSendError(answer, response)
     }
 }

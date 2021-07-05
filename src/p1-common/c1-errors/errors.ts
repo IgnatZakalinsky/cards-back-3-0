@@ -49,7 +49,8 @@ export const onUnhandledRejection = (f?: (e?: string) => void) => {
     })
 }
 
-// отлов ошибок чтоб сервер не падал
+/** отлов ошибок чтоб сервер не падал
+ */
 export const globalCatch = (fUncaught?: (e?: string) => void, fUnhandled?: (e?: string) => void) => {
     onUncaughtException(fUncaught)
     onUnhandledRejection(fUnhandled)

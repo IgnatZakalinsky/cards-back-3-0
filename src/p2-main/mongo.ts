@@ -1,9 +1,6 @@
 import mongoose from 'mongoose'
 import {deepCopySafely, globalCatch} from '../p1-common/c1-errors/errors'
-
-const USER_NAME = process.env.MONGO_DB_USER_NAME || ''
-const PASSWORD = process.env.MONGO_DB_USER_PASSWORD || ''
-const MONGO_DB_URL = process.env.MONGO_DB_URL || ''
+import {USER_NAME, PASSWORD, MONGO_DB_URL} from '../p0-config/config'
 
 export const MONGO_DB_URIS = `mongodb+srv://${USER_NAME}:${PASSWORD}@${MONGO_DB_URL}?retryWrites=true&w=majority`
 
