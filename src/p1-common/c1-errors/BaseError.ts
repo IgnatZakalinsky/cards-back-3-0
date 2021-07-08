@@ -16,7 +16,7 @@ export class BaseError {
     /** отправка ошибки
      */
     sendError(res: Response) {
-        const error = IS_DEVELOPER_VERSION
+        const error = !IS_DEVELOPER_VERSION
             ? 'try later'
             : this.type === 500
                 ? 'some error: ' + (

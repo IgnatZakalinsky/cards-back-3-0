@@ -4,8 +4,8 @@ import mongoose, {Schema, Document, Model} from 'mongoose'
 
 export type DeviceTokenType = {
     device?: string
-    token?: string
-    tokenDeathTime?: number
+    token: string
+    tokenDeathTime: number
 }
 
 export interface IUser extends Document {
@@ -37,9 +37,11 @@ const DeviceToken = new Schema(
         },
         token: {
             type: String,
+            required: true,
         },
         tokenDeathTime: {
             type: Number,
+            required: true,
         },
     }
 )
